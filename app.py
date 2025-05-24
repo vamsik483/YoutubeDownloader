@@ -42,14 +42,20 @@ def fetch_formats():
         return jsonify({'error': 'Invalid YouTube URL'}), 400
 
     try:
-        # Check if it's a playlist
-        ydl_opts = {"quiet": True, "extract_flat": True}
+        ydl_opts = {
+            "quiet": True,
+            "extract_flat": True,
+            "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36",
+            "http_headers": {
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                "Accept-Language": "en-US,en;q=0.5"
+            }
+        }
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
             video_urls = [entry["url"] for entry in info["entries"]] if "entries" in info else [url]
 
-        # Fetch formats for the first video
-        cmd = ["yt-dlp", "--list-formats", video_urls[0]]
+        cmd = ["yt-dlp", "--list-formats", "--user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36", video_urls[0]]
         result = subprocess.run(cmd, capture_output=True, text=True)
         if result.returncode != 0:
             return jsonify({'error': f'Error fetching formats: {result.stderr}'}), 500
@@ -71,7 +77,7 @@ def fetch_formats():
 
     except Exception as e:
         return jsonify({'error': f'Error fetching formats: {str(e)}'}), 500
-
+        
 @app.route('/api/download', methods=['POST'])
 def download_video():
     """Download a YouTube video in the selected format."""
